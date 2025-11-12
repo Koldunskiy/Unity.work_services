@@ -1,0 +1,27 @@
+SELECT 
+    CURRENT_DATE() AS `date`,
+    SUM(CASE WHEN Profit_komp.`date` = CURRENT_DATE() THEN IFNULL(LP_cost.cost_lp, 0) + IFNULL(Profit_komp.Profit_kompani, 0) ELSE 0 END) AS Today,
+    SUM(CASE WHEN Profit_komp.`date` = CURRENT_DATE() - INTERVAL 1 DAY THEN LP_cost.cost_lp + Profit_komp.Profit_kompani ELSE 0 END) AS Yesterday,
+    SUM(CASE WHEN YEARWEEK(Profit_komp.`date`, 1) = YEARWEEK(CURRENT_DATE(), 1) THEN LP_cost.cost_lp + Profit_komp.Profit_kompani ELSE 0 END) AS Current_Week, 
+    SUM(CASE WHEN DATE(Profit_komp.`date`) BETWEEN DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 7 DAY) AND DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 1 DAY) THEN LP_cost.cost_lp + Profit_komp.Profit_kompani ELSE 0 END) AS past_Week,
+    SUM(CASE WHEN MONTH(Profit_komp.`date`) = MONTH(CURRENT_DATE()) AND YEAR(Profit_komp.`date`) = YEAR(CURRENT_DATE()) THEN LP_cost.cost_lp + Profit_komp.Profit_kompani ELSE 0 END) AS Current_Month
+FROM (
+    SELECT 
+        DATE(mt5r1_custom.lp_deals.deal_time) AS `date`, 
+        IFNULL(SUM(CASE 
+            WHEN mt5r1_custom.lp_deals.deal_type IN (0, 1) THEN commission
+            WHEN mt5r1_custom.lp_deals.deal_type IN (5, 7, 8, 9) THEN Profit
+        END), 0) AS cost_lp
+    FROM mt5r1_custom.lp_deals
+    WHERE mt5r1_custom.lp_deals.deal_type IN (0, 1, 5, 7, 8, 9) and account_number IN(759492) -- счета с которых тащится комиссия по лп
+    GROUP BY DATE(mt5r1_custom.lp_deals.deal_time)
+) AS LP_cost
+Right JOIN (
+    SELECT 
+        DATE(`Time`) AS `date`, 
+        IFNULL(SUM(Profit),0) AS Profit_kompani
+    FROM mt5r2.mt5_deals
+    WHERE Login = 816454 AND `Action` IN (0, 1)
+    GROUP BY DATE(`Time`)
+) AS Profit_komp
+ON Profit_komp.`date` = LP_cost.`date`;
