@@ -5,19 +5,26 @@ import schedule
 import time
 
 # Название базы данных
-db_name = 'balance.db'
+DB_NAME = 'balance.db'
 
-# Функция для вставки данных в БД
-def insert_balance(balance: float, timestamp: int):
-    conn = sqlite3.connect(db_name)
+
+def insert_balance(balance: float, timestamp: int) -> None:
+    """Вставляет баланс и timestamp в БД.
+
+    Args:
+        balance (float): Значение баланса.
+        timestamp (int): Временная метка.
+    """
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS balance (id INTEGER PRIMARY KEY AUTOINCREMENT, balance REAL, timestamp INTEGER)")
     cursor.execute("INSERT INTO balance (balance, timestamp) VALUES (?, ?)", (balance, timestamp))
     conn.commit()
     conn.close()
 
-# Функция для получения баланса с Bybit
-def bybit_balance():
+
+def bybit_balance() -> None:
+    """Получает баланс с Bybit и сохраняет в БД."""
     api_key = 'rixIdgl13et1dCa8pX'  # Укажите ваш API-ключ
     api_secret = 'Dvy76elR0ZAFjklSUhPfqpnjzAFlxPSRCLTR'  # Укажите ваш секретный ключ
 
@@ -36,13 +43,11 @@ def bybit_balance():
     except Exception as e:
         print(f"Ошибка при получении баланса: {e}")
 
-# bybit_balance()
 
-# # Запланировать выполнение функции в 10:00 утра каждый день
 schedule.every().day.at("21:00").do(bybit_balance)
 
 if __name__ == "__main__":
     print("Balance Bybit")
     while True:
         schedule.run_pending()
-        time.sleep(10)  # Проверяем задачи каждую минуту
+        time.sleep(10)  # Проверяем задачи каждые 10 секунд
