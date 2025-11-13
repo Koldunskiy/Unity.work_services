@@ -1,7 +1,9 @@
 import telebot
 from telebot import types
 
-def create_user_menu():
+
+def create_user_menu() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню выбора пользователя."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_anton = types.KeyboardButton("Anton")
     button_percev = types.KeyboardButton("Percev")
@@ -12,7 +14,9 @@ def create_user_menu():
     markup.add(button_bybit, button_other)
     return markup
 
-def create_broker_menu():
+
+def create_broker_menu() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню выбора брокера."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_neo = types.KeyboardButton("Neo MU")
     button_kz = types.KeyboardButton("Neo KZ")
@@ -22,7 +26,8 @@ def create_broker_menu():
     return markup
 
 
-def create_broker_menu_for_percev():
+def create_broker_menu_for_percev() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню брокера для Percev."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_unity = types.KeyboardButton("Unity Server")
     button_MT = types.KeyboardButton("MT 5")
@@ -31,37 +36,42 @@ def create_broker_menu_for_percev():
     return markup
 
 
-def create_main_menu():
+def create_main_menu() -> types.ReplyKeyboardMarkup:
+    """Создаёт основное меню."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button1 = types.KeyboardButton("Дневной PnL")
-    button2 = types.KeyboardButton("Balance dynamic") 
+    button2 = types.KeyboardButton("Balance dynamic")
     button3 = types.KeyboardButton("PnL dynamic")
     button_back = types.KeyboardButton("Назад")
     markup.add(button1, button2, button3, button_back)
     return markup
 
 
-def create_main_menu_for_MT5_Percev():
+def create_main_menu_for_MT5_Percev() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню для MT5 Percev."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button1 = types.KeyboardButton("Equity")
-    button2 = types.KeyboardButton("Realized_pnl") 
+    button2 = types.KeyboardButton("Realized_pnl")
     button3 = types.KeyboardButton("Balanc")
     button_back = types.KeyboardButton("Назад")
     markup.add(button1, button2, button3, button_back)
     return markup
 
 
-def create_menu_Select_time_interval():
+def create_menu_Select_time_interval() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню выбора интервала времени."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button1 = types.KeyboardButton("Сегодня")
-    button2 = types.KeyboardButton("Вчера") 
+    button2 = types.KeyboardButton("Вчера")
     button3 = types.KeyboardButton("Неделя")
     button4 = types.KeyboardButton("Месяц")
     button_back = types.KeyboardButton("Назад")
     markup.add(button1, button2, button3, button4, button_back)
     return markup
 
-def create_interval_menu():
+
+def create_interval_menu() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню детального интервала."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_week = types.KeyboardButton("Текущая неделя")
     button_last_week = types.KeyboardButton("Прошлая неделя")
@@ -74,17 +84,20 @@ def create_interval_menu():
     markup.add(button_back)
     return markup
 
-def binace_traders(resize_keyboard=True):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+
+def binace_traders(resize_keyboard: bool = True) -> types.ReplyKeyboardMarkup:
+    """Создаёт меню трейдеров Binance."""
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=resize_keyboard)
     traders_1 = types.KeyboardButton("Гвидо 1")
     traders_2 = types.KeyboardButton("Гвидо 2")
     traders_3 = types.KeyboardButton("Петр")
     markup.add(traders_1, traders_2, traders_3)
     return markup
 
-def create_walet_binance():
+
+def create_walet_binance() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню типов кошельков Binance."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    # Затем выбор типа кошелька: "Future", "Spot", "Margin"
     button_future = types.KeyboardButton("FUTURES")
     button_spot = types.KeyboardButton("SPOT")
     button_margin = types.KeyboardButton("MARGIN")
@@ -92,13 +105,17 @@ def create_walet_binance():
     markup.add(button_future, button_spot, button_margin, button_back)
     return markup
 
-def Bybit_traders():
+
+def Bybit_traders() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню трейдеров Bybit."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_andrey = types.KeyboardButton("Андрей")
     markup.add(button_andrey)
     return markup
 
-def type_balnce_bybit():
+
+def type_balnce_bybit() -> types.ReplyKeyboardMarkup:
+    """Создаёт меню типов баланса Bybit."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     balance = types.KeyboardButton("Баланс Bybit")
     balance_dinamic = types.KeyboardButton("Динамика баланса Bybit")

@@ -21,10 +21,6 @@ where comment LIKE '%Percev%' -- тут указать поиск по ключ�
 ;'''
 
 
-
-
-
-
 # Эквити Перцев сейчас(подставляем нужный коммент в счетах)
 Equity = '''
 select 
@@ -49,7 +45,17 @@ where mt5r1.mt5_users.comment LIKE '%Percev%' -- тут указать поис�
 
 
 # Реализованный ПЛ по счёту/счетам, за всё время или промежуток (подставляем нужный коммент в счетах)
-Realized_pnl = lambda start, end: f'''
+def Realized_pnl(start: str, end: str) -> str:
+    """Генерирует SQL-запрос для реализованного PNL за период.
+
+    Args:
+        start (str): Начало периода (YYYY-MM-DD).
+        end (str): Конец периода (YYYY-MM-DD).
+
+    Returns:
+        str: SQL-запрос.
+    """
+    return f'''
 select 
 ROUND(SUM( case
 	when real_group.`Group` LIKE 'real\\\\cent\\\\bbook%' then (IFNULL((real_deals.Profit + real_deals.Storage + real_deals.Commission + real_deals.Fee), 0)) * 0.01
