@@ -1,0 +1,221 @@
+Select 
+CURRENT_DATE() as `Date`, 
+0 as `Start`, 
+SUM(case 
+	when real_loginy.`Group` LIKE 'real\\\\cent\\\\bbook%' then Balance * 0.01
+	when real_loginy.`Group` not LIKE 'real\\\\cent\\\\bbook%' then Balance
+	else 0
+end) as Balance, 
+SUM(case 
+		when `Group` LIKE 'real\\\\active\\\\Bbook%' then Balance -- Группа Ббук 100% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%10_percent' then Balance * 0.9 -- Группа абук 10 - 90% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%20_percent' then Balance * 0.8 -- Группа абук 20 - 80% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%30_percent' then Balance * 0.7 -- Группа абук 30 - 70% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%40_percent' then Balance * 0.6 -- Группа абук 40 - 60% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%50_percent' then Balance * 0.5 -- Группа абук 50 - 50% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%60_percent' then Balance * 0.4 -- Группа абук 60 - 40% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%70_percent' then Balance * 0.3 -- Группа абук 70 - 30% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%80_percent' then Balance * 0.2 -- Группа абук 80 - 20% в калькуляцию
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%90_percent' then Balance * 0.1 -- Группа абук 90 - 10% в калькуляцию
+		when `Group` LIKE 'real\\\\active\\\\hedge_MainUSD%' then Balance
+		when `Group` LIKE 'real\\\\active\\\\netting_MainUSD%' then Balance
+		when `Group` LIKE 'real\\\\active\\\\PurseUSD%' then Balance
+		when `Group` LIKE 'real\\\\cent\\\\bbook%' then Balance * 0.01
+		else 0
+end) as BBOOK, 
+SUM(case 
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` not like '%_percent' then Balance
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%10_percent' then Balance * 0.1
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%20_percent' then Balance * 0.2
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%30_percent' then Balance * 0.3
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%40_percent' then Balance * 0.4
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%50_percent' then Balance * 0.5
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%60_percent' then Balance * 0.6
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%70_percent' then Balance * 0.7
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%80_percent' then Balance * 0.8
+		when `Group` LIKE 'real\\\\active_Abook\\\\Abook%' and `Group` like '%90_percent' then Balance * 0.9
+		else 0
+end) as ABOOK
+from (
+    /*начало все реальные логины*/
+    select vse_aki.*
+    from (
+        /*конец Блок ббук группы автоматика опеределения*/
+        SELECT `Group` 
+        FROM mt5r2.mt5_groups
+        WHERE `group` LIKE 'real\\\\active\\\\Bbook%' and Currency ='USD' 
+            or (`group` LIKE 'real\\\\active_Abook\\\\Abook%' and Currency ='USD') 
+            or (`group` LIKE 'real\\\\cent\\\\bbook%' and Currency ='USC')
+        /*конец Блок ббук группы автоматика опеределения*/
+    ) as bbook_ak 
+    inner join (
+        /*начало Блок все логины с исключениями*/
+        select Login, `Group`, Balance, BalancePrevDay, BalancePrevMonth 
+        from mt5r2.mt5_users
+        where Login not in (
+            /*начало Блок исключений из статистики*/
+            select Login
+            from mt5r2.mt5_users
+            where FirstName in ( 
+								'FirstName', 
+								'First Admin', 
+								'Шлюз OPICS-MT5', 
+								'MT5Replicator', 
+								'For delete partners', 
+								'Поддержка MetaQuotes', 
+								'Технический Дилер для Уведомления и закрытия позиций по CFD', 
+								'Тех логин для доступа MT5OpicsImport', 
+								'Тех. логин для доступа MT5ARobotImport', 
+								'Тех. дилер для MT5GroupChanger', 
+								'MT5PammUploader TEST', 
+								'MT5OpicsConvertation', 
+								'MT5 Summary 2 OPICS', 
+								'TESTMT5OpicsConvertation', 
+								'MT5ARobotGateway', 
+								'FX Best Feeder Rezerv', 
+								'ARobot Feeder', 
+								'ARobot Get-Accounts', 
+								'MT5SoapProvider', 
+								'Alfa-Robot-MT5-Gateway-LD4', 
+								'MT5FeederAlfaRobot-LD4', 
+								'MT5BBProGateway', 
+								'BBProDealService', 
+								'BBProGatewayX', 
+								'MT5GatewayUnity', 
+								'MT5GatewayActiveBBook', 
+								'FastMT Admins', 
+								'TPS (Trading Platform Service)', 
+								'WEB Gate', 
+								'MT5 Pamm Uploader', 
+								'Alfa Forex Site', 
+								'MT5SwapsFree(тех. пользователь)', 
+								'MT5DataPro', 
+								'MT5 Monitor', 
+								'MT5 Pamm Info', 
+								'AF Online IOS', 
+								'Тех. логин для доступа MT5PartnerShip', 
+								'Casual Investment', 
+								'Technical AlfaFinance', 
+								'Alfa-Finance Get Quotes', 
+								'MT5WebAPIExtension Plugin', 
+								'MT5Monitor64', 
+								'MT5PartnerShip для EuroTrader', 
+								'MatchLiquidityDealService', 
+								'MT5DataPro TEST', 
+								'MT5PammInfo TEST', 
+								'MT5Partnership TEST', 
+								'ACM_MT5RegulatoryReporting', 
+								'MT5PositionManager', 
+								'AF Online Android', 
+								'MTServiceTools', 
+								'Dealer 7', 
+								'MT5ServiceReports', 
+								'1C Galament Integration', 
+								'ADEALING', 
+								'MT5FeederAR_RFD', 
+								'MT5FeederAR_RFD_LD4', 
+								'MT5TicksExport', 
+								'MT5FeederNTPro64_RFD', 
+								'Kaz Retail CRM', 
+								'ACM_MT5FloatLeverageService', 
+								'MT5 Quotex view-only', 
+								'MT5FeederProvider', 
+								'ACM_MT5PropTrading', 
+								'MT5CreditActiveService', 
+								'MT5SwapFreeActive', 
+								'RFD-Gateway tick manager', 
+								'ACM_MT5FloatLeverageService_Kval', 
+								'FastMT Monitoring', 
+								'FastMT Backup', 
+								'Dealer 1', 
+								'Dealer 4', 
+								'Dealer 2', 
+								'Dealer 5', 
+								'Dealer 6', 
+								'Dealer 3', 
+								'Менеджер ZuluTrade', 
+								'Dealer 8', 
+								'RobotMoveAB', 
+								'Dealer 9', 
+								'Dealer 10', 
+								'Dealer 11', 
+								'Dealer 12', 
+								'I-FO', 
+								'Dealer 13', 
+								'CySEC', 
+								'View manager', 
+								'Cappitech', 
+								'FX View Only', 
+								'Murat', 
+								'FX manager', 
+								'FX Manager 2 nov', 
+								'FX Manager 3 din', 
+								'FX Manager 4 sub', 
+								'FX Manager 5 nak', 
+								'FX Manager 6 lov', 
+								'FX Manager 7 rnov', 
+								'FX Manager 8 ova', 
+								'FX web manager', 
+								'FX Manager 9 ikov', 
+								'FX Manager 10 shin', 
+								'FX Manager 11 up1', 
+								'FX Manager 12 SF', 
+								'FX Manager sich 13', 
+								'FX Manager 14 up2', 
+								'FX Manager 15 rou', 
+								'FX Manager 16', 
+								'FX Manager 17', 
+								'FX Manager 18', 
+								'View account', 
+								'FX_Manager_Sofia', 
+								'FX_Manager_Venera', 
+								'Дежурный дилер АСМ', 
+								'Dealer 14', 
+								'FX admin hov', 
+								'audit 1', 
+								'TestNewIossub TestNewVadim', 
+								'TestIossub TestVadim ll', 
+								'yvayvayvav yvayvavya', 
+								'test test', 
+								'TestIossub TestVadim Petrovich', 
+								'test fsdfsdf fsdfsf gfdsgsdg тест', 
+								'TestIossub TestVadim Test', 
+								'fgsd gfsdsdf', 
+								'Ggg Fff Ff', 
+								'fsdfsd fsdfs', 
+								'SeletskiTest Kirill Borisovich', 
+								'BruvTest SergTest', 
+								'TestSmirnov TestIvan', 
+								'Test Sergei', 
+								'Test Andrei', 
+								'TestSmirnov Ivan Valerevich', 
+								'Indicative', 
+								'TestIvan', 
+								'Andrei BbN', 
+								'Andrei BbH', 
+								'Andrei AbN', 
+								'Andrei AbH', 
+								'Test Swapfree netting', 
+								'Test Swapfree hedge', 
+								'Test Swapfree Pilot hedge', 
+								'PL abook', 
+								'testing for FastMT', 
+								'test abook hedge', 
+								'Test Kagirova Venera Ramzisovna', 
+								'FastMT Test', 
+								'Test Sophia ssss', 
+								'Test Test Artyom Lyutikov', 
+								'A-Book Client PnL (открытие-сделка на LP, закрытие-цена клиента, наша сторона, всегда должен быть плюс'
+            ) 
+            OR FirstName LIKE 'Bbook %' 
+            OR FirstName LIKE 'Abook %' 
+            OR FirstName LIKE 'test %' 
+            OR FirstName LIKE '% test' 
+            OR Login IN /*начало Здесь указать логины исключения*/ ('0') /*конец Здесь указать логины исключения*/
+            /*конец Блок исключений из статистики*/
+        ) 
+        /*конец Блок все логины с исключениями*/
+    ) as vse_aki on vse_aki.`Group`=bbook_ak.`Group`
+    /*Конец все реальные логины*/
+) as real_loginy -- *********************************Это основа, это значит, что если не ограничивать выдачу с фильтрами Флоатинг ПЛ + Все ПЛ не должно быть ноль, то выведены будут все логины по ббук с частичными перекрытиями в том числе
+;

@@ -1,0 +1,697 @@
+select 
+SUM(case 
+	when DATE(date_plus_3HOUR) = CURRENT_DATE() 
+	then (FLOATING_PL_Today + SUM_BBOOK_PL + SUM_BBOOK_Komissii_MT5 + SUM_BBOOK_Realized_Swap + SUM_BBOOK_Dividend + SUM_BBOOK_korreccii)
+end) *-1 as PL_kompani_Bbok_Today, 
+SUM(case 
+	when DATE(date_plus_3HOUR) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) 
+	then (FLOATING_PL_YESTERDAY + SUM_BBOOK_PL + SUM_BBOOK_Komissii_MT5 + SUM_BBOOK_Realized_Swap + SUM_BBOOK_Dividend + SUM_BBOOK_korreccii)
+end) *-1 as PL_kompani_Bbok_YESTERDAY, 
+SUM(case 
+	when DATE(date_plus_3HOUR) BETWEEN DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) AND CURDATE() 
+	then (FLOATING_PL_NOW_WEEK + SUM_BBOOK_PL + SUM_BBOOK_Komissii_MT5 + SUM_BBOOK_Realized_Swap + SUM_BBOOK_Dividend + SUM_BBOOK_korreccii)
+end) *-1 as PL_kompani_Bbok_WEEK, 
+SUM(case 
+	when DATE(date_plus_3HOUR) BETWEEN DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 7 DAY) AND DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 1 DAY) 
+	then (FLOATING_PL_past_WEEK + SUM_BBOOK_PL + SUM_BBOOK_Komissii_MT5 + SUM_BBOOK_Realized_Swap + SUM_BBOOK_Dividend + SUM_BBOOK_korreccii)
+end) *-1 as PL_kompani_past_WEEK, 
+SUM(case 
+	when DATE(date_plus_3HOUR) BETWEEN DATE_SUB(CURDATE(), INTERVAL DAY(CURDATE()) - 1 DAY) AND CURDATE() 
+	then (FLOATING_PL_NOW_MONTH + SUM_BBOOK_PL + SUM_BBOOK_Komissii_MT5 + SUM_BBOOK_Realized_Swap + SUM_BBOOK_Dividend + SUM_BBOOK_korreccii)
+end) *-1 as PL_kompani_Bbok_MONTH 
+from (
+				select real_loginy.Login, 
+						plav_PL.date_plus_3HOUR, 
+						real_loginy.`Group` as Group_NOW, 
+						case 
+							when DATE(plav_PL.date_plus_3HOUR) = CURRENT_DATE() 
+							then plav_PL.`Group` -- ***********тут обязательно указать максимальная дата по запросу
+							else 0
+						end as Group_With_Max_Date, -- тут мы выявили какая группа по последней дате в периоде и высчитываем далее от этого параметра плавающую на конец запрашиваемого периода
+						plav_PL.`Group` as Group_daily_floating, 
+						case 
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\cent\\\\bbook%' then plav_PL.SUM_Floating_PL * 0.01
+							else plav_PL.SUM_Floating_PL
+						end as SUM_Floating_PL, 
+    CASE 
+        WHEN DATE(date_plus_3HOUR) = CURDATE() THEN
+            CASE
+                WHEN plav_PL.`Group` LIKE 'real\\\\active\\\\Bbook%' THEN SUM_Floating_PL
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%10_percent' THEN SUM_Floating_PL * 0.9
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%20_percent' THEN SUM_Floating_PL * 0.8
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%30_percent' THEN SUM_Floating_PL * 0.7
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%40_percent' THEN SUM_Floating_PL * 0.6
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%50_percent' THEN SUM_Floating_PL * 0.5
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%60_percent' THEN SUM_Floating_PL * 0.4
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%70_percent' THEN SUM_Floating_PL * 0.3
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%80_percent' THEN SUM_Floating_PL * 0.2
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%90_percent' THEN SUM_Floating_PL * 0.1
+                when plav_PL.`Group` LIKE 'real\\\\cent\\\\bbook%' then SUM_Floating_PL * 0.01
+                ELSE 0
+            END
+        ELSE 0
+    END AS FLOATING_PL_Today, 
+ CASE 
+        WHEN DATE(date_plus_3HOUR) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN
+            CASE
+                WHEN plav_PL.`Group` LIKE 'real\\\\active\\\\Bbook%' THEN SUM_Floating_PL
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%10_percent' THEN SUM_Floating_PL * 0.9
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%20_percent' THEN SUM_Floating_PL * 0.8
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%30_percent' THEN SUM_Floating_PL * 0.7
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%40_percent' THEN SUM_Floating_PL * 0.6
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%50_percent' THEN SUM_Floating_PL * 0.5
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%60_percent' THEN SUM_Floating_PL * 0.4
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%70_percent' THEN SUM_Floating_PL * 0.3
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%80_percent' THEN SUM_Floating_PL * 0.2
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%90_percent' THEN SUM_Floating_PL * 0.1
+                when plav_PL.`Group` LIKE 'real\\\\cent\\\\bbook%' then SUM_Floating_PL * 0.01
+                ELSE 0
+            end
+        ELSE 0
+    END AS FLOATING_PL_YESTERDAY, 
+    -- начало текущая неделя ищем складываем в общий плавающий и результат только в одну строку, которая сегодняшний день
+(    CASE 
+        WHEN DATE(date_plus_3HOUR) = CURDATE() THEN
+            SUM(CASE 
+	                WHEN DATE(date_plus_3HOUR) BETWEEN DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) AND CURDATE() 
+	                then SUM_Floating_PL
+                    ELSE 0
+                    END
+				) OVER (
+                PARTITION BY Login
+            )
+        ELSE 0
+    END) 
+    -- конец текущая неделя ищем складываем в общий плавающий и результат только в одну строку, которая сегодняшний день
+    * 
+    -- начало тут мы выявляем коэф от группы хеджирования или цент и проставляем в последнюю строку-текущий день
+    (    CASE 
+        WHEN DATE(date_plus_3HOUR) = CURDATE() THEN
+            (CASE 
+                WHEN plav_PL.`Group` LIKE 'real\\\\active\\\\Bbook%' THEN 1
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%10_percent' THEN 0.9
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%20_percent' THEN 0.8
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%30_percent' THEN 0.7
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%40_percent' THEN 0.6
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%50_percent' THEN 0.5
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%60_percent' THEN 0.4
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%70_percent' THEN 0.3
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%80_percent' THEN 0.2
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%90_percent' THEN 0.1
+                WHEN plav_PL.`Group` LIKE 'real\\\\cent\\\\bbook%' THEN 0.01
+                ELSE 0
+            end)
+        ELSE 0
+    END) 
+    -- конец тут мы выявляем коэф от группы хеджирования или цент и проставляем в последнюю строку-текущий день
+    FLOATING_PL_NOW_WEEK, 
+        -- начало прошлая неделя ищем складываем в общий плавающий и результат только в одну строку, которая сегодняшний день
+(    CASE 
+        WHEN DATE(date_plus_3HOUR) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 5 DAY) THEN -- тут 5 дней потому что нам нужно сделать видимым число если нет в базе субботы и вс, будет среда 100 % вариант
+            SUM(CASE 
+	                WHEN DATE(date_plus_3HOUR) BETWEEN DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 7 DAY) AND DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 1 DAY) 
+	                then SUM_Floating_PL
+                    ELSE 0
+                    END
+				) OVER (
+                PARTITION BY Login
+            )
+        ELSE 0
+    END) 
+    -- конец текущая неделя ищем складываем в общий плавающий и результат только в одну строку, которая сегодняшний день
+    * 
+    -- начало тут мы выявляем коэф от группы хеджирования или цент и проставляем в последнюю строку-текущий день
+    (    CASE 
+        WHEN DATE(date_plus_3HOUR) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) + 5 DAY) THEN -- тут 5 дней потому что нам нужно сделать видимым число если нет в базе субботы и вс, будет среда 100 % вариант
+            (CASE 
+                WHEN plav_PL.`Group` LIKE 'real\\\\active\\\\Bbook%' THEN 1
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%10_percent' THEN 0.9
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%20_percent' THEN 0.8
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%30_percent' THEN 0.7
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%40_percent' THEN 0.6
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%50_percent' THEN 0.5
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%60_percent' THEN 0.4
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%70_percent' THEN 0.3
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%80_percent' THEN 0.2
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%90_percent' THEN 0.1
+                WHEN plav_PL.`Group` LIKE 'real\\\\cent\\\\bbook%' THEN 0.01
+                ELSE 0
+            end)
+        ELSE 0
+    END) 
+    -- конец тут мы выявляем коэф от группы хеджирования или цент и проставляем в последнюю строку-текущий день
+    FLOATING_PL_past_WEEK, 
+    -- начало текущий месяц ищем складываем в общий плавающий и результат только в одну строку, которая сегодняшний день
+ (   CASE 
+        WHEN DATE(date_plus_3HOUR) = CURDATE() THEN
+            SUM(CASE 
+	                WHEN DATE(date_plus_3HOUR) BETWEEN DATE_SUB(CURDATE(), INTERVAL DAY(CURDATE()) - 1 DAY) AND CURDATE() 
+	                then SUM_Floating_PL
+                    ELSE 0
+                    END
+				) OVER (
+                PARTITION BY Login
+            )
+        ELSE 0
+    end) 
+     -- конец текущий месяц ищем складываем в общий плавающий и результат только в одну строку, которая сегодняшний день
+    *
+    -- начало тут мы выявляем коэф от группы хеджирования или цент и проставляем в последнюю строку-текущий день
+        (    CASE 
+        WHEN DATE(date_plus_3HOUR) = CURDATE() THEN
+            (CASE 
+                WHEN plav_PL.`Group` LIKE 'real\\\\active\\\\Bbook%' THEN 1
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%10_percent' THEN 0.9
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%20_percent' THEN 0.8
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%30_percent' THEN 0.7
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%40_percent' THEN 0.6
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%50_percent' THEN 0.5
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%60_percent' THEN 0.4
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%70_percent' THEN 0.3
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%80_percent' THEN 0.2
+                WHEN plav_PL.`Group` LIKE 'real\\\\active_Abook\\\\Abook%' AND plav_PL.`Group` LIKE '%90_percent' THEN 0.1
+                WHEN plav_PL.`Group` LIKE 'real\\\\cent\\\\bbook%' THEN 0.01
+                ELSE 0
+            end)
+        ELSE 0
+    END) 
+    -- конец тут мы выявляем коэф от группы хеджирования или цент и проставляем в последнюю строку-текущий день
+    AS FLOATING_PL_NOW_MONTH,     
+						case 
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\Bbook%' then plav_PL.DailyProfit -- Группа Ббук 100% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%10_percent' then (plav_PL.DailyProfit) * 0.9 -- Группа абук 10 - 90% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%20_percent' then (plav_PL.DailyProfit) * 0.8 -- Группа абук 20 - 80% в алькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%30_percent' then (plav_PL.DailyProfit) * 0.7 -- Группа абук 30 - 70% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%40_percent' then (plav_PL.DailyProfit) * 0.6 -- Группа абук 40 -60% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%50_percent' then (plav_PL.DailyProfit) * 0.5 -- Группа абук 50 -50% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%60_percent' then (plav_PL.DailyProfit) * 0.4 -- Группа Абук 60 - 40% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%70_percent' then (plav_PL.DailyProfit) * 0.3 -- Группа абук 70 - 30% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%80_percent' then (plav_PL.DailyProfit) * 0.2 -- Группа абук 80 -20% в каклькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%90_percent' then (plav_PL.DailyProfit) * 0.1 -- Группа абук 90 -10% в калькуляцию
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\hedge_MainUSD%' then plav_PL.DailyProfit
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\netting_MainUSD%' then plav_PL.DailyProfit
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\cent\\\\bbook%' then (plav_PL.DailyProfit) * 0.01
+							else 0
+						end as SUM_BBOOK_PL,  -- суммируем пл только по ббук группам, когда счёт находился в ней
+						case 
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\Bbook%' then plav_PL.Komissii_MT5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%10_percent' then (plav_PL.Komissii_MT5) * 0.9
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%20_percent' then (plav_PL.Komissii_MT5) * 0.8
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%30_percent' then (plav_PL.Komissii_MT5) * 0.7
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%40_percent' then (plav_PL.Komissii_MT5) * 0.6
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%50_percent' then (plav_PL.Komissii_MT5) * 0.5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%60_percent' then (plav_PL.Komissii_MT5) * 0.4
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%70_percent' then (plav_PL.Komissii_MT5) * 0.3
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%80_percent' then (plav_PL.Komissii_MT5) * 0.2
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%90_percent' then (plav_PL.Komissii_MT5) * 0.1
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\hedge_MainUSD%' then plav_PL.Komissii_MT5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\netting_MainUSD%' then plav_PL.Komissii_MT5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\cent\\\\bbook%' then (plav_PL.Komissii_MT5) * 0.01
+							else 0
+						end as SUM_BBOOK_Komissii_MT5, -- суммируем пл только по ббук группам, когда счёт находился в ней
+						case 
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\Bbook%' then plav_PL.Realized_Swap
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%10_percent' then (plav_PL.Realized_Swap) * 0.9
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%20_percent' then (plav_PL.Realized_Swap) * 0.8
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%30_percent' then (plav_PL.Realized_Swap) * 0.7
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%40_percent' then (plav_PL.Realized_Swap) * 0.6
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%50_percent' then (plav_PL.Realized_Swap) * 0.5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%60_percent' then (plav_PL.Realized_Swap) * 0.4
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%70_percent' then (plav_PL.Realized_Swap) * 0.3
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%80_percent' then (plav_PL.Realized_Swap) * 0.2
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%90_percent' then (plav_PL.Realized_Swap) * 0.1
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\hedge_MainUSD%' then plav_PL.Realized_Swap
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\netting_MainUSD%' then plav_PL.Realized_Swap
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\cent\\\\bbook%' then (plav_PL.Realized_Swap) * 0.01
+							else 0
+						end as SUM_BBOOK_Realized_Swap, -- суммируем пл только по ббук группам, когда счёт находился в ней
+						case 
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\Bbook%' then plav_PL.Dividend
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%10_percent' then (plav_PL.Dividend) * 0.9
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%20_percent' then (plav_PL.Dividend) * 0.8
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%30_percent' then (plav_PL.Dividend) * 0.7
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%40_percent' then (plav_PL.Dividend) * 0.6
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%50_percent' then (plav_PL.Dividend) * 0.5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%60_percent' then (plav_PL.Dividend) * 0.4
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%70_percent' then (plav_PL.Dividend) * 0.3
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%80_percent' then (plav_PL.Dividend) * 0.2
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%90_percent' then (plav_PL.Dividend) * 0.1
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\hedge_MainUSD%' then plav_PL.Dividend
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\netting_MainUSD%' then plav_PL.Dividend
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\cent\\\\bbook%' then (plav_PL.Dividend) * 0.01
+							else 0
+						end as SUM_BBOOK_Dividend, -- суммируем пл только по ббук группам, когда счёт находился в ней
+						case 
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\Bbook%' then plav_PL.korreccii
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%10_percent' then (plav_PL.korreccii) * 0.9
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%20_percent' then (plav_PL.korreccii) * 0.8
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%30_percent' then (plav_PL.korreccii) * 0.7
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%40_percent' then (plav_PL.korreccii) * 0.6
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%50_percent' then (plav_PL.korreccii) * 0.5
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%60_percent' then (plav_PL.korreccii) * 0.4
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%70_percent' then (plav_PL.korreccii) * 0.3
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%80_percent' then (plav_PL.korreccii) * 0.2
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active_Abook\\\\Abook%' and plav_PL.`Group` like '%90_percent' then (plav_PL.korreccii) * 0.1
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\hedge_MainUSD%' then plav_PL.korreccii
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\active\\\\netting_MainUSD%' then plav_PL.korreccii
+							when plav_PL.`Group` /*Group_daily_floating*/ LIKE 'real\\\\cent\\\\bbook%' then (plav_PL.korreccii) * 0.01
+							else 0
+						end as SUM_BBOOK_korreccii -- суммируем пл только по ббук группам, когда счёт находился в ней								
+						from (
+								/*начало все реальные логины*/
+								select vse_aki.*
+								from (
+										/*конец Блок ббук группы автоматика опеределения*/
+										SELECT `Group` 
+										FROM mt5r2.mt5_groups
+										WHERE `group` LIKE 'real\\\\active\\\\Bbook%' and Currency ='USD' 
+												or (`group` LIKE 'real\\\\active_Abook\\\\Abook%' and Currency ='USD') 
+												or (`group` LIKE 'real\\\\cent\\\\bbook%' and Currency ='USC')
+										/*конец Блок ббук группы автоматика опеределения*/
+									) as bbook_ak 
+								inner join (
+											/*начало Блок все логины с исключениями*/
+											select Login, `Group` -- берём только логины и группы
+											from mt5r2.mt5_users
+											where Login not in (
+																/*начало Блок исключений из статистики*/
+																select Login
+																from mt5r2.mt5_users
+																where FirstName in ( 
+																					'FirstName', 
+																					'First Admin', 
+																					'Шлюз OPICS-MT5', 
+																					'MT5Replicator', 
+																					'For delete partners', 
+																					'Поддержка MetaQuotes', 
+																					'Технический Дилер для Уведомления и закрытия позиций по CFD', 
+																					'Тех логин для доступа MT5OpicsImport', 
+																					'Тех. логин для доступа MT5ARobotImport', 
+																					'Тех. дилер для MT5GroupChanger', 
+																					'MT5PammUploader TEST', 
+																					'MT5OpicsConvertation', 
+																					'MT5 Summary 2 OPICS', 
+																					'TESTMT5OpicsConvertation', 
+																					'MT5ARobotGateway', 
+																					'FX Best Feeder Rezerv', 
+																					'ARobot Feeder', 
+																					'ARobot Get-Accounts', 
+																					'MT5SoapProvider', 
+																					'Alfa-Robot-MT5-Gateway-LD4', 
+																					'MT5FeederAlfaRobot-LD4', 
+																					'MT5BBProGateway', 
+																					'BBProDealService ', 
+																					'BBProGatewayX ', 
+																					'MT5GatewayUnity', 
+																					'MT5GatewayActiveBBook', 
+																					'FastMT Admins', 
+																					'TPS (Trading Platform Service)', 
+																					'WEB Gate', 
+																					'MT5 Pamm Uploader', 
+																					'Alfa Forex Site', 
+																					'MT5SwapsFree(тех. пользователь)', 
+																					'MT5DataPro', 
+																					'MT5 Monitor', 
+																					'MT5 Pamm Info', 
+																					'AF Online IOS', 
+																					'Тех. логин для доступа MT5PartnerShip', 
+																					'Casual Investment', 
+																					'Technical AlfaFinance', 
+																					'Alfa-Finance Get Quotes', 
+																					'MT5WebAPIExtension Plugin', 
+																					'MT5Monitor64', 
+																					'MT5PartnerShip для EuroTrader', 
+																					'MatchLiquidityDealService', 
+																					'MT5DataPro TEST', 
+																					'MT5PammInfo TEST', 
+																					'MT5Partnership TEST', 
+																					'ACM_MT5RegulatoryReporting', 
+																					'MT5PositionManager', 
+																					'AF Online Android', 
+																					'MTServiceTools', 
+																					'Dealer 7', 
+																					'MT5ServiceReports', 
+																					'1C Galament Integration', 
+																					'ADEALING', 
+																					'MT5FeederAR_RFD', 
+																					'MT5FeederAR_RFD_LD4', 
+																					'MT5TicksExport', 
+																					'MT5FeederNTPro64_RFD', 
+																					'Kaz Retail CRM', 
+																					'ACM_MT5FloatLeverageService ', 
+																					'MT5 Quotex view-only', 
+																					'MT5FeederProvider', 
+																					'ACM_MT5PropTrading', 
+																					'MT5CreditActiveService', 
+																					'MT5SwapFreeActive', 
+																					'RFD-Gateway tick manager', 
+																					'ACM_MT5FloatLeverageService_Kval', 
+																					'FastMT Monitoring', 
+																					'FastMT Backup', 
+																					'Dealer 1', 
+																					'Dealer 4', 
+																					'Dealer 2', 
+																					'Dealer 5', 
+																					'Dealer 6', 
+																					'Dealer 3', 
+																					'Менеджер ZuluTrade', 
+																					'Dealer 8', 
+																					'RobotMoveAB', 
+																					'Dealer 9', 
+																					'Dealer 10', 
+																					'Dealer 11', 
+																					'Dealer 12', 
+																					'I-FO', 
+																					'Dealer 13', 
+																					'CySEC', 
+																					'View manager', 
+																					'Cappitech', 
+																					'FX View Only', 
+																					'Murat', 
+																					'FX manager', 
+																					'FX Manager 2 nov', 
+																					'FX Manager 3 din', 
+																					'FX Manager 4 sub', 
+																					'FX Manager 5 nak', 
+																					'FX Manager 6 lov', 
+																					'FX Manager 7 rnov', 
+																					'FX Manager 8 ova', 
+																					'FX web manager', 
+																					'FX Manager 9 ikov', 
+																					'FX Manager 10 shin', 
+																					'FX Manager 11 up1', 
+																					'FX Manager 12 SF', 
+																					'FX Manager sich 13', 
+																					'FX Manager 14 up2', 
+																					'FX Manager 15 rou', 
+																					'FX Manager 16', 
+																					'FX Manager 17', 
+																					'FX Manager 18', 
+																					'View account', 
+																					'FX_Manager_Sofia', 
+																					'FX_Manager _Venera', 
+																					'Дежурный дилер АСМ', 
+																					'Dealer 14', 
+																					'FX admin hov', 
+																					'audit 1', 
+																					'TestNewIossub TestNewVadim ', 
+																					'TestIossub TestVadim ll', 
+																					'yvayvayvav yvayvavya ', 
+																					'test test ', 
+																					'TestIossub TestVadim Petrovich', 
+																					'test fsdfsdf fsdfsf gfdsgsdg тест', 
+																					'TestIossub TestVadim Test', 
+																					'fgsd gfsdsdf ', 
+																					'Ggg Fff Ff', 
+																					'fsdfsd fsdfs ', 
+																					'SeletskiTest Kirill Borisovich', 
+																					'BruvTest SergTest ', 
+																					'TestSmirnov TestIvan ', 
+																					'Test  Sergei  ', 
+																					'Test Andrei ', 
+																					'TestSmirnov Ivan Valerevich', 
+																					'Indicative', 
+																					'TestIvan', 
+																					'Andrei BbN', 
+																					'Andrei BbH', 
+																					'Andrei AbN', 
+																					'Andrei AbH', 
+																					'Test Swapfree netting', 
+																					'Test Swapfree hedge', 
+																					'Test Swapfree Pilot hedge', 
+																					'PL abook', 
+																					'testing for FastMT', 
+																					'test abook hedge', 
+																					'Test Kagirova Venera Ramzisovna', 
+																					'FastMT Test', 
+																					'Test Sophia ssss', 
+																					'Test Test Artyom Lyutikov', 
+																					'A-Book Client PnL (открытие-сделка на LP, закрытие-цена клиента, наша сторона, всегда должен быть плюс' 
+																					) 
+																	  OR FirstName LIKE 'Bbook %' 
+																      OR FirstName LIKE 'Abook %' 
+																      OR FirstName LIKE 'test %' 
+																      OR FirstName LIKE '% test' 
+																      OR Login IN /*начало Здесь указать логины исключения*/ ('0') /*конец Здесь указать логины исключения*/
+																      /*конец Блок исключений из статистики*/
+																) 
+											/*конец Блок все логины с исключениями*/) as vse_aki on vse_aki.`Group`=bbook_ak.`Group`
+								/*Конец все реальные логины*/
+							) as real_loginy -- *********************************Это основа, это значит, что если не ограничивать выдачу с фильтрами Флоатинг ПЛ + Все ПЛ не должно быть ноль, то выведены будут все логины по ббук с частичными перекрытиями в том числе
+						left join (-- Начало выявление плавающего ПЛ, логин, дата, группа
+									select Login, 
+											`Group`, 
+											Currency, 
+											DATE_SUB(FROM_UNIXTIME(`Datetime`), INTERVAL 3 HOUR) AS date_plus_3HOUR, 
+											IFNULL(SUM(ProfitStorage + Profit), 0) - IFNULL(SUM(EquityPrevDay - Credit - BalancePrevDay + DailyCredit), 0) as SUM_Floating_PL, -- уже посчитано плавающий новый день минус плавающий старый день, а потом это всё сложить за период равно плавающий
+											SUM(DailyProfit) as DailyProfit, 
+											SUM(DailyCommRound + DailyCommInstant + DailyCommFee) as Komissii_MT5, 
+											SUM(DailyStorage) as Realized_Swap,
+											SUM(DailyDividend + DailyTaxes) as Dividend,
+											SUM(Profit_korrectirovki) as korreccii, 
+											SUM(Nominal_all_VOL) as Nominal_all_VOL, -- номинальные объёмы с распределением по группам
+											SUM(polny_obiom_Lot) as polny_obiom_Lot, -- полные лоты прошедшие далее распределяем по группам и процентажу
+											SUM(close_obiom_Lot) as close_obiom_Lot -- закрывающие лоты прошедшие далее распределяем по группам и процентажу
+									from (select daily_plus_today.Login, 
+										  daily_plus_today.`Group`, 
+										  daily_plus_today.Currency, 
+										  daily_plus_today.`Datetime`, 
+										  daily_plus_today.DatetimePrev, 
+										  daily_plus_today.Credit, 
+										  daily_plus_today.CommissionDaily, 
+										  daily_plus_today.BalancePrevDay, 
+										  daily_plus_today.EquityPrevday, 
+										  daily_plus_today.Profit, 
+										  daily_plus_today.ProfitStorage, 
+										  daily_plus_today.DailyProfit, 
+										  daily_plus_today.DailyCredit, 
+										  daily_plus_today.DailyStorage, 
+										  daily_plus_today.DailyComminstant, 
+										  daily_plus_today.DailyCommfee, 
+										  daily_plus_today.DailyCommRound, 
+										  daily_plus_today.DailyDividend, 
+										  daily_plus_today.DailyTaxes, 
+										  ifnull((korrectirovki.Profit),0) as Profit_korrectirovki, ifnull((korrectirovki.Nominal_all_VOL),0) as Nominal_all_VOL, ifnull((korrectirovki.polny_obiom_Lot),0) as polny_obiom_Lot, ifnull((korrectirovki.close_obiom_Lot),0) as close_obiom_Lot
+										  from
+										  -- Начало
+										  -- начало Под замену mt5_daily плюс дополнение сегодняшнего дняискуственное формирование недостающего, имитируем сегодняшний день в таблицу дейли
+										  (
+										  		   select mt5r2.mt5_daily.Login, 
+											       mt5r2.mt5_daily.`Group`, 
+											       mt5r2.mt5_daily.Currency, 
+											       mt5r2.mt5_daily.`Datetime`, 
+											       mt5r2.mt5_daily.DatetimePrev, 
+											       mt5r2.mt5_daily.Credit, 
+											       mt5r2.mt5_daily.CommissionDaily, 
+											       mt5r2.mt5_daily.BalancePrevDay, 
+											       mt5r2.mt5_daily.EquityPrevday, 
+											       mt5r2.mt5_daily.Profit, 
+											       mt5r2.mt5_daily.ProfitStorage, 
+											       mt5r2.mt5_daily.DailyProfit, 
+											       mt5r2.mt5_daily.DailyCredit, 
+											       mt5r2.mt5_daily.DailyStorage, 
+											       mt5r2.mt5_daily.DailyComminstant, 
+											       mt5r2.mt5_daily.DailyCommfee, 
+											       mt5r2.mt5_daily.DailyCommRound, 
+											       mt5r2.mt5_daily.DailyDividend, 
+											       mt5r2.mt5_daily.DailyTaxes
+											from mt5r2.mt5_daily
+											where DATE(DATE_SUB(FROM_UNIXTIME(mt5r2.mt5_daily.`Datetime`), INTERVAL 3 HOUR)) BETWEEN DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 15 DAY) AND LAST_DAY(CURDATE())
+											AND Login in (
+											-- ********************** тут начало блока с фильтрацией логинов
+            								/*начало все реальные логины*/
+            								select vse_aki.Login
+            								from (
+            										/*конец Блок ббук группы автоматика опеределения*/
+            										SELECT `Group` 
+            										FROM mt5r2.mt5_groups
+            										WHERE `group` LIKE 'real\\\\active\\\\Bbook%' and Currency ='USD' 
+            												or (`group` LIKE 'real\\\\active_Abook\\\\Abook%' and Currency ='USD') 
+            												or (`group` LIKE 'real\\\\cent\\\\bbook%' and Currency ='USC')
+            										/*конец Блок ббук группы автоматика опеределения*/
+            									) as bbook_ak 
+            								inner join (
+            											/*начало Блок все логины с исключениями*/
+            											select Login, `Group` -- берём только логины и группы
+            											from mt5r2.mt5_users
+            											where Login not in (0) 
+            											/*конец Блок все логины с исключениями*/) as vse_aki on vse_aki.`Group`=bbook_ak.`Group`
+            								/*Конец все реальные логины*/
+											-- ********************** тут конец блока с фильтрацией логинов
+											)
+											union ALL
+											-- Это модуль формирования поддельной дейли таблицы за сегодняшний день вшивать его
+											select mt5r2.mt5_users.Login, 
+											mt5r2.mt5_users.`Group`,  
+											mt5r2.mt5_groups.Currency, 
+											UNIX_TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL '25:59:59' HOUR_SECOND)) AS `Datetime`, 
+											IFNULL(Prev_is_daily.DatetimePrev, 946684799) as DatetimePrev, 
+											mt5r2.mt5_users.Credit, 
+											IFNULL(deals_today.CommissionDaily, 0) as CommissionDaily, 
+											mt5r2.mt5_users.BalancePrevDay, 
+											mt5r2.mt5_users.EquityPrevday, 
+											IFNULL(Position_online.Profit, 0) as Profit, 
+											IFNULL(Position_online.ProfitStorage, 0) as ProfitStorage, 
+											IFNULL(deals_today.DailyProfit, 0) as DailyProfit, 
+											IFNULL(deals_today.DailyCredit, 0) as DailyCredit, 
+											IFNULL(deals_today.DailyStorage, 0) as DailyStorage, 
+											IFNULL(deals_today.DailyComminstant, 0) as DailyComminstant, 
+											IFNULL(deals_today.DailyCommfee, 0) as DailyCommfee, 
+											IFNULL(deals_today.DailyCommRound, 0) as DailyCommRound, 
+											IFNULL(deals_today.DailyDividend, 0) as DailyDividend, 
+											IFNULL(deals_today.DailyTaxes, 0) as DailyTaxes  
+											from mt5r2.mt5_users
+											left join mt5r2.mt5_groups on mt5r2.mt5_groups.`Group` = mt5r2.mt5_users.`Group`
+											Left join 
+													 (select Login, MAX(`Datetime`) as DatetimePrev
+													 from mt5r2.mt5_daily
+													 group by Login) as Prev_is_daily on mt5r2.mt5_users.Login = Prev_is_daily.Login
+											Left join (
+														select Login, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (8) then mt5r2.mt5_deals.Profit
+														end), 0) as CommissionDaily, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (0,1) then mt5r2.mt5_deals.Profit
+														end), 0) as DailyProfit, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (3) then mt5r2.mt5_deals.Profit
+														end), 0) as DailyCredit, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (0,1) then mt5r2.mt5_deals.Storage
+														end), 0) as DailyStorage, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (0,1) then mt5r2.mt5_deals.Commission
+														end), 0) as DailyComminstant, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (0,1) then mt5r2.mt5_deals.Fee
+														end), 0) as DailyCommfee, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (7) then mt5r2.mt5_deals.Profit
+														end), 0) as DailyCommRound, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (15,16) then mt5r2.mt5_deals.Profit
+														end), 0) as DailyDividend, 
+														IFNULL(SUM(case 
+															when mt5r2.mt5_deals.`Action` in (17) then mt5r2.mt5_deals.Profit
+														end), 0) as DailyTaxes 
+														from mt5r2.mt5_deals 
+														where DATE(`Time`) = CURDATE()
+														group by Login
+														) as deals_today  on deals_today.Login = mt5r2.mt5_users.Login
+											Left join (
+														select Login, SUM(Profit) as Profit, SUM(Storage) as ProfitStorage
+														from mt5r2.mt5_positions
+														group by Login
+														) as Position_online on Position_online.Login = mt5r2.mt5_users.Login
+											where mt5r2.mt5_users.Login in (
+											-- ********************** тут начало блока с фильтрацией логинов
+            								/*начало все реальные логины*/
+            								select vse_aki.Login
+            								from (
+            										/*конец Блок ббук группы автоматика опеределения*/
+            										SELECT `Group` 
+            										FROM mt5r2.mt5_groups
+            										WHERE `group` LIKE 'real\\\\active\\\\Bbook%' and Currency ='USD' 
+            												or (`group` LIKE 'real\\\\active_Abook\\\\Abook%' and Currency ='USD') 
+            												or (`group` LIKE 'real\\\\cent\\\\bbook%' and Currency ='USC')
+            										/*конец Блок ббук группы автоматика опеределения*/
+            									) as bbook_ak 
+            								inner join (
+            											/*начало Блок все логины с исключениями*/
+            											select Login, `Group` -- берём только логины и группы
+            											from mt5r2.mt5_users
+            											where Login not in (0) 
+            											/*конец Блок все логины с исключениями*/) as vse_aki on vse_aki.`Group`=bbook_ak.`Group`
+            								/*Конец все реальные логины*/
+											-- ********************** тут конец блока с фильтрацией логинов
+											)
+											-- Это модуль формирования поддельной дейли таблицы за сегодняшний день вшивать его		
+										  ) as daily_plus_today
+										  -- конец Под замену mt5_daily плюс дополнение сегодняшнего дняискуственное формирование недостающего, имитируем сегодняшний день в таблицу дейли
+										  -- Конец
+										  left join (
+													-- Начало
+													/*начало Блок дилсы баланс, корректировки где они в ПЛ а также объём в долларах по дате и логину*/
+													SELECT mt5r2.mt5_deals.Login, 
+													DATE(mt5r2.mt5_deals.`Time`) as Date_Time, 
+													SUM(case 
+														when  
+														    (
+															    mt5r2.mt5_deals.`Action` IN (19)
+															    OR (
+															        mt5r2.mt5_deals.`Action` = 2
+															        AND (
+															            mt5r2.mt5_deals.Comment IN (
+															                'indemnification',
+															                'compensation',
+															                'Drawdown compensation',
+															                'Bonus transfer',
+															                'bonus transfer',
+															                'Swapfree compensation',
+															                'balance indemnification',
+															                'Balance indemnification',
+															                'commission compensation',
+															                'idemnification'
+																	         )
+																	    )
+																	)
+																 OR (
+																	 mt5r2.mt5_deals.`Action` IN (19, 2)
+																	  AND mt5r2.mt5_deals.Comment LIKE '%Swap Free Commission'
+																	 )
+															 )
+														then mt5r2.mt5_deals.Profit
+														else 0
+													end) as Profit, 
+													SUM(CASE 
+													        WHEN mt5r2.mt5_symbols.CalcMode = 0 THEN 
+													            (mt5r2.mt5_deals.Volume / 10000) * mt5r2.mt5_symbols.ContractSize * mt5r2.mt5_deals.RateMargin
+													        WHEN mt5r2.mt5_symbols.CalcMode = 4 THEN 
+													            (mt5r2.mt5_deals.Volume / 10000) * mt5r2.mt5_symbols.ContractSize * mt5r2.mt5_deals.Price * mt5r2.mt5_deals.RateMargin
+													        ELSE 
+													            0
+													    end) as Nominal_all_VOL, -- объёмы по группам распределение
+												    SUM(CASE WHEN mt5r2.mt5_deals.`Action` IN (0, 1) THEN (mt5r2.mt5_deals.Volume / 10000) ELSE NULL END) as polny_obiom_Lot, 
+												    SUM(CASE WHEN mt5r2.mt5_deals.`Action` IN (0, 1) THEN (mt5r2.mt5_deals.VolumeClosed / 10000) ELSE NULL END) as close_obiom_Lot
+													FROM mt5r2.mt5_deals
+													LEFT JOIN mt5r2.mt5_symbols on mt5r2.mt5_symbols.Symbol = mt5r2.mt5_deals.Symbol
+													WHERE (
+													        mt5r2.mt5_deals.`Action` IN (0, 1, 7, 8, 9, 12, 15, 16, 17, 19)
+													        OR (
+													            mt5r2.mt5_deals.`Action` = 2
+													            AND (
+													                mt5r2.mt5_deals.Comment IN (
+													                    'indemnification',
+													                    'compensation',
+													                    'Drawdown compensation',
+													                    'Bonus transfer',
+													                    'bonus transfer',
+													                    'Swapfree compensation',
+													                    'balance indemnification',
+													                    'Balance indemnification',
+													                    'commission compensation',
+													                    'idemnification'
+													                )
+													            )
+													        )
+													        OR (
+													            mt5r2.mt5_deals.`Action` IN (7, 8, 9, 12, 15, 16, 17, 19, 2)
+													            AND mt5r2.mt5_deals.Comment LIKE '%Swap Free Commission'
+													        )
+													    )
+													AND DATE(mt5r2.mt5_deals.`Time`) BETWEEN DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 15 DAY) AND LAST_DAY(CURDATE())
+													group by DATE(mt5r2.mt5_deals.`Time`), mt5r2.mt5_deals.Login
+													/*начало Блок дилсы баланс, корректировки где они в ПЛ а также объём в долларах по дате и логину*/
+													-- Конец
+													) as korrectirovki on korrectirovki.Login = daily_plus_today.Login and DATE(DATE_SUB(FROM_UNIXTIME(daily_plus_today.`Datetime`), INTERVAL 3 HOUR)) = korrectirovki.Date_Time
+											where DATE(DATE_SUB(FROM_UNIXTIME(daily_plus_today.`Datetime`), INTERVAL 3 HOUR)) BETWEEN DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 15 DAY) AND LAST_DAY(CURDATE())
+											-- ограничиваем общую выдачу если история сегодняшний день не пойдёт на просчёт
+								  			) as daily_plus_deals -- Тут мы соединили вместе таблицу дейли и таблицу дилс где дополнительно забираются компенсации по датам, объёмы, лоты
+									group by DATE_SUB(FROM_UNIXTIME(`Datetime`), INTERVAL 3 HOUR), Login, `Group`, Currency
+									-- Конец выявление плавающего ПЛ, логин, дата, группа
+									) as plav_PL
+									on plav_PL.Login = real_loginy.Login and (DATE(plav_PL.date_plus_3HOUR) BETWEEN DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 15 DAY) AND LAST_DAY(CURDATE())
+									) and plav_PL.Currency in ('USD', 'USC') -- тут мы фильтруем дейли таблицу чтобы там были только рельные логины и промежуток времени чтобы в этот промежуток засунуть дилсы из другой таблицы, и оставляем только группы в USD
+       ) as all_PL_bbok_4
+;
