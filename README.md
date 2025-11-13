@@ -1,33 +1,29 @@
-```
 # Unity.work_services
 
-## Table of Contents
-- [Core Components](#core-components)
-- [Contributing](#contributing)
-- [License](#license)
+## Содержание
+- [Основные компоненты](#основные-компоненты)
+- [Внесение вклада](#внесение-вклада)
+- [Лицензия](#лицензия)
 
+## Основные компоненты
 
+| Компонент              | Описание                                      |
+|------------------------|-----------------------------------------------|
+| `Binance Connector`    | Коннектор между биржами Unity и Binance       |
+| `OKX Connector`        | Коннектор между биржами Unity и OKX           |
+| `BackTest Trades Ideas`| Парсер Trade-стратегий из Telegram-каналов    |
+| `StatisticsCount Bot`  | Бот расчета статистики торговли               |
 
-## Core Components
-
-| Компонент           | Описание |
-|---------------------|---------|
-| `Binance Connector`      | Коннектор между биржами Unity и Binance |
-| `OKX Connector`          | Коннектор между биржами Unity и OKX |
-| `BackTest Trades Ideas`    | Парсер Trade тратегий из телеграм каналов |
-| `StatisticsCount Bot`   | Бот расчета статистики торговли |
-
-
-## Contributing
+## Внесение вклада
 
 1. Форкните репозиторий.
 2. Создайте ветку: `git checkout -b feature/название`.
-3. Зафиксируйте: `git commit -m "Add: описание"`.
+3. Зафиксируйте изменения: `git commit -m "Add: описание"`.
 4. Запушьте и создайте **Pull Request**.
 
 Подробности — в [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## License
+## Лицензия
 
 Распространяется под лицензией [**MIT**](LICENSE).
 
