@@ -1,0 +1,135 @@
+[project]
+name = "unity-work-services"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Koldun", email = "koldunskiymag@yandex.ru" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    # === Асинхронные и сетевые библиотеки ===
+    "aiohappyeyeballs==2.6.1",
+    "aiohttp==3.12.15",
+    "aiosignal==1.4.0",
+    "async-timeout==5.0.1",
+    "frozenlist==1.7.0",
+    "multidict==6.6.4",
+    "yarl==1.20.1",
+    "websockets==15.0.1",
+
+    # === Биржевые API ===
+    "pybit==5.11.0",
+    "python-binance==1.0.29",
+
+    # === Telegram и уведомления ===
+    "pyTelegramBotAPI==4.29.1",
+
+    # === Работа с данными ===
+    "pandas==2.3.2",
+    "numpy==2.0.2",
+    "openpyxl==3.1.5",
+    "dateparser==1.2.2",
+    "tabulate==0.9.0",
+
+    # === Визуализация ===
+    "matplotlib==3.9.4",
+    "contourpy==1.3.0",
+    "cycler==0.12.1",
+    "fonttools==4.60.1",
+    "kiwisolver==1.4.7",
+    "pillow==11.3.0",
+    "pyparsing==3.2.5",
+
+    # === Утилиты и планировщик ===
+    "schedule==1.2.2",
+    "tqdm==4.67.1",
+    "requests==2.32.5",
+    "urllib3==2.5.0",
+    "certifi==2025.8.3",
+    "charset-normalizer==3.4.3",
+    "idna==3.10",
+
+    # === База данных ===
+    "mysql-connector-python==9.4.0",
+
+    # === Криптография ===
+    "pycryptodome==3.23.0",
+
+    # === Асинхронность и параллелизм ===
+    "gevent==25.8.2",
+    "greenlet==3.2.4",
+
+    # === Jupyter / Интерактивная разработка ===
+    "ipykernel==6.30.1",
+    "ipython==8.18.1",
+    "jupyter-client==8.6.3",
+    "jupyter-core==5.8.1",
+    "debugpy==1.8.16",
+    "nest-asyncio==1.6.0",
+    "comm==0.2.3",
+    "matplotlib-inline==0.1.7",
+    "prompt-toolkit==3.0.52",
+    "Pygments==2.19.2",
+    "traitlets==5.14.3",
+    "jedi==0.19.2",
+    "parso==0.8.5",
+    "decorator==5.2.1",
+    "executing==2.2.1",
+    "asttokens==3.0.0",
+    "stack-data==0.6.3",
+    "pure-eval==0.2.3",
+    "wcwidth==0.2.13",
+
+    # === Системные и платформенные ===
+    "pywin32==311; sys_platform == 'win32'",
+    "psutil==7.0.0",
+    "platformdirs==4.4.0",
+    "colorama==0.4.6",
+    "tornado==6.5.2",
+    "pyzmq==27.0.2",
+
+    # === Дополнительные утилиты ===
+    "six==1.17.0",
+    "python-dateutil==2.9.0.post0",
+    "pytz==2025.2",
+    "tzdata==2025.2",
+    "tzlocal==5.3.1",
+    "regex==2025.9.1",
+    "packaging==25.0",
+    "typing-extensions==4.15.0",
+
+    # === Низкоуровневые зависимости ===
+    "attrs==25.3.0",
+    "cffi==2.0.0",
+    "pycparser==2.22",
+    "zipp==3.23.0",
+    "importlib-metadata==8.7.0",
+    "importlib-resources==6.5.2",
+    "exceptiongroup==1.3.0",
+    "propcache==0.3.2",
+
+    # === WebSocket ===
+    "websocket-client==1.8.0",
+    "websocket==0.2.1",  # Note: возможно, конфликтует с websocket-client
+
+    # === Zope (используется gevent) ===
+    "zope.event==5.1.1",
+    "zope.interface==7.2",
+
+    # === Quantstats ===
+    "quantstats==0.0.62",
+    "aiogram (>=3.22.0,<4.0.0)",
+]
+
+[tool.poetry]
+package-mode = false
+packages = [{ include = "unity" }]
+
+[tool.poetry.scripts]
+start = "unity.start:main"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
