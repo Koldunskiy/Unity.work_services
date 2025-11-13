@@ -1,4 +1,3 @@
-
 from process_data import main_data_processing, vizual, send_message
 from datetime import datetime
 import requests
@@ -9,6 +8,7 @@ import logging
 
 # Конфигурирование логгера
 logging.basicConfig(filename='app.log', level=logging.INFO)
+
 '''Рабочие значения токена'''
 TOKEN = TOKEN
 TG_CH = TG_CH
@@ -17,12 +17,26 @@ URL = 'https://api.telegram.org/bot'
 bot = telebot.TeleBot(TOKEN)
 
 
-def send_document_file(path_to_file):
+def send_document_file(path_to_file: str) -> None:
+    """Отправляет документ в Telegram-чат.
+
+    Args:
+        path_to_file (str): Путь к файлу для отправки.
+    """
     files = {'document': open(path_to_file, 'rb')}
     requests.post(f'{URL}{TOKEN}/sendDocument?chat_id={TG_CH}', files=files)
 
+
 @bot.message_handler(content_types=['document'])
-def handle_document(message):
+def handle_document(message) -> None:
+    """Обработчик входящих документов в Telegram-боте.
+
+    Проверяет, является ли файл .xlsx, скачивает его, обрабатывает данные,
+    визуализирует и отправляет обратно. Удаляет файл после обработки.
+
+    Args:
+        message: Сообщение от Telegram с документом.
+    """
     global FILE_NAME
     # Проверяем, является ли прикрепленный файл .xlsx
     if message.document.file_name.endswith('.xlsx'):
@@ -41,7 +55,8 @@ def handle_document(message):
         vizual(FILE_NAME)
         send_document_file(FILE_NAME)
         os.remove(FILE_NAME)
-   
+
+
 if __name__ == "__main__":
     # Запускаем бота
     try:
@@ -50,4 +65,4 @@ if __name__ == "__main__":
     except Exception as e:
         # Логирование ошибки
         logging.error(f"Ошибка в тестере стратегий: {str(e)}", exc_info=True)
-        send_message(f"Ошибка в тестере стратегий: {str(e)}", mod = 0)
+        send_message(f"Ошибка в тестере стратегий: {str(e)}", mod=0)
